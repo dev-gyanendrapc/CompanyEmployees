@@ -29,16 +29,23 @@ namespace Service
             var employeesDto = _mapper.Map<IEnumerable<EmployeeDto>>(employeesFromDb);
             return employeesDto;
         }
-        public async Task<IEnumerable<EmployeeDto>> GetEmployeesAsync(Guid companyId, EmployeeParameters employeeParameters, bool trackChanges)
+        public async Task<(IEnumerable<EmployeeDto> employees, MetaData metaData)> GetEmployeesAsync(Guid companyId, EmployeeParameters employeeParameters, bool trackChanges)
         {
-            var company = await _repository.Company.GetCompanyAsync(companyId, trackChanges);
-            if (company is null)
-                throw new CompanyNotFoundException(companyId);
+            //var company = await _repository.Company.GetCompanyAsync(companyId, trackChanges);
+            //if (company is null)
+            //    throw new CompanyNotFoundException(companyId);
 
-            var employeesFromDb = await _repository.Employee
-            .GetEmployeesAsync(companyId, employeeParameters, trackChanges);
-            var employeesDto = _mapper.Map<IEnumerable<EmployeeDto>>(employeesFromDb);
-            return employeesDto;
+            //var employeesFromDb = await _repository.Employee
+            //.GetEmployeesAsync(companyId, employeeParameters, trackChanges);
+            //var employeesDto = _mapper.Map<IEnumerable<EmployeeDto>>(employeesFromDb);
+            //return employeesDto;
+            if (!employeeParameters.ValidAgeRange)
+                throw new MaxAgeRangeBadRequestException();
+
+            await CheckIfCompanyExists(companyId, trackChanges);
+            var employeesWithMetaData = await _repository.Employee.GetEmployeesAsync(companyId, employeeParameters, trackChanges);
+            var employeesDto = _mapper.Map<IEnumerable<EmployeeDto>>(employeesWithMetaData);
+            return (employees: employeesDto, metaData: employeesWithMetaData.MetaData);
         }
 
         public EmployeeDto GetEmployee(Guid companyId, Guid id, bool trackChanges)
@@ -165,6 +172,13 @@ namespace Service
         {
             _mapper.Map(employeeToPatch, employeeEntity);
             _repository.Save();
+        }
+
+        private async Task CheckIfCompanyExists(Guid companyId, bool trackChanges)
+        {
+            var company = await _repository.Company.GetCompanyAsync(companyId, trackChanges);
+            if (company is null)
+                throw new CompanyNotFoundException(companyId);
         }
     }
 }

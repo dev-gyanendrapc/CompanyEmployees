@@ -19,8 +19,18 @@ namespace Shared.RequestFeatures
                 _pageSize = (value > maxPageSize) ? maxPageSize : value;
             }
         }
+        public string? OrderBy { get; set; }
     }
     public class EmployeeParameters : RequestParameters
     {
+        public EmployeeParameters()
+        {
+            OrderBy = "name";
+        }
+        public uint MinAge { get; set; }
+        public uint MaxAge { get; set; } = int.MaxValue;
+        public bool ValidAgeRange => MaxAge > MinAge;
+
+        public string? SearchTerm { get; set; }
     }
 }

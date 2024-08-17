@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
+using Shared.DataTransferObjects;
 using System.Text;
-using static Shared.DataTransferObjects;
 
 namespace CompanyEmployees.Formatters
 {

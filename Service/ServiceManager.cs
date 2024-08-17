@@ -1,6 +1,12 @@
 ﻿using AutoMapper;
 using Contracts;
+using Entities.ConfigurationModels;
+using Entities.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Service.Contracts;
+using Shared.DataTransferObjects;
 
 namespace Service
 {
@@ -8,12 +14,25 @@ namespace Service
     {
         private readonly Lazy<ICompanyService> _companyService;
         private readonly Lazy<IEmployeeService> _employeeService;
-        public ServiceManager(IRepositoryManager repositoryManager, ILoggerManager loggerManager, IMapper mapper)
+        private readonly Lazy<IAuthenticationService> _authenticationService;
+
+        public ServiceManager(
+            IRepositoryManager repositoryManager, 
+            ILoggerManager loggerManager, 
+            IMapper mapper, 
+            IDataShaper<EmployeeDto> dataShaper, 
+            UserManager<User> userManager,
+          IOptions<JwtConfiguration> configuration
+            )
         {
             _companyService = new Lazy<ICompanyService>(() => new CompanyService(repositoryManager, loggerManager, mapper));
-            _employeeService = new Lazy<IEmployeeService>(() => new EmployeeService(repositoryManager, loggerManager,mapper));
+            _employeeService = new Lazy<IEmployeeService>(() => new EmployeeService(repositoryManager, loggerManager,mapper, dataShaper));
+            _authenticationService = new Lazy<IAuthenticationService>(() => new AuthenticationService(loggerManager, mapper, userManager, configuration));
+
         }
         public ICompanyService CompanyService => _companyService.Value;
         public IEmployeeService EmployeeService => _employeeService.Value;
+        public IAuthenticationService AuthenticationService =>_authenticationService.Value;
+
     }
 }

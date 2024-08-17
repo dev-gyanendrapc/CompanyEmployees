@@ -3,7 +3,7 @@ using Contracts;
 using Entities.Exceptions;
 using Entities.Models;
 using Service.Contracts;
-using static Shared.DataTransferObjects;
+using Shared.DataTransferObjects;
 
 namespace Service
 {

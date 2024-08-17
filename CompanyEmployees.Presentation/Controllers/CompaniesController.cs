@@ -1,13 +1,19 @@
 ﻿using CompanyEmployees.Presentation.ActionFilters;
 using CompanyEmployees.Presentation.ModelBinders;
+using Marvin.Cache.Headers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
-using static Shared.DataTransferObjects;
+using Shared.DataTransferObjects;
 
 namespace CompanyEmployees.Presentation.Controllers
 {
+    [ApiVersion("1.0")]
     [Route("api/[controller]")]
     [ApiController]
+    [ApiExplorerSettings(GroupName = "v1")]
+    //[ResponseCache(CacheProfileName = "120SecondsDuration")]
+
     public class CompaniesController : ControllerBase
     {
         private readonly IServiceManager _service;
@@ -20,7 +26,13 @@ namespace CompanyEmployees.Presentation.Controllers
         //    return Ok(companies);
         //}
 
-        [HttpGet]
+        /// <summary>
+        /// Gets the list of all companies
+        /// </summary>
+        /// <returns>The companies list</returns>
+
+        [HttpGet(Name = "GetCompanies")]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> GetCompanies()
         {
             var companies = await
@@ -37,10 +49,12 @@ namespace CompanyEmployees.Presentation.Controllers
         //}
 
         [HttpGet("{id:guid}", Name = "CompanyById")]
+        //[ResponseCache(Duration = 60)]
+        [HttpCacheExpiration(CacheLocation = CacheLocation.Public, MaxAge = 60)]
+        [HttpCacheValidation(MustRevalidate = false)]
         public async Task<IActionResult> GetCompany(Guid id)
         {
-            var company = await _service.CompanyService.GetCompanyAsync(id, trackChanges:
-            false);
+            var company = await _service.CompanyService.GetCompanyAsync(id, trackChanges: false);
             return Ok(company);
         }
 
@@ -55,8 +69,21 @@ namespace CompanyEmployees.Presentation.Controllers
         //    var createdCompany = _service.CompanyService.CreateCompany(company);
         //    return CreatedAtRoute("CompanyById", new {id=createdCompany.Id}, createdCompany);
         //}
-        [HttpPost]
+
+        /// <summary>
+        /// Creates a newly created company
+        /// </summary>
+        /// <param name="company"></param>
+        /// <returns>A newly created company</returns>
+        /// <response code="201">Returns the newly created item</response>
+        /// <response code="400">If the item is null</response>
+        /// <response code="422">If the model is invalid</response>
+        [HttpPost(Name = "CreateCompany")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
+        [ProducesResponseType(201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(422)]
+
         public async Task<IActionResult> CreateCompany([FromBody] CompanyForCreationDto company)
         {
             //if (company is null)
@@ -132,5 +159,13 @@ namespace CompanyEmployees.Presentation.Controllers
             _service.CompanyService.UpdateCompany(id, company, trackChanges: true);
             return NoContent();
         }
+
+        [HttpOptions]
+        public IActionResult GetCompaniesOptions()
+        {
+            Response.Headers.Add("Allow", "GET, OPTIONS, POST");
+            return Ok();
+        }
+
     }
 }
